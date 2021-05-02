@@ -66,7 +66,7 @@ class LikedName(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='liked_name'
+        related_name='liked_names'
     )
     liked_name = models.ForeignKey(
         BabyName,

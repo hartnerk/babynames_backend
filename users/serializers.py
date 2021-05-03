@@ -13,7 +13,7 @@ class UserPreferencesSerializer(serializers.ModelSerializer):
 class BabyNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = BabyName
-        fields = ['id', 'baby_name']
+        fields = ['id', 'baby_name', 'gender', 'usage']
 
 
 class UserNamesPoolSerializer(serializers.ModelSerializer):

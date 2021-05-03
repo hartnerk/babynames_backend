@@ -51,6 +51,8 @@ class UserNamesPool(models.Model):
 # Stores all baby names.  Pools pull from this list.
 class BabyName(models.Model):
     baby_name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=6)
+    usage = models.CharField(max_length=100)
     pool = models.ForeignKey(
         UserNamesPool,
         on_delete=models.CASCADE,

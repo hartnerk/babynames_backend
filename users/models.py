@@ -12,7 +12,8 @@ class UserCouples(models.Model):
     user_two = models.ForeignKey(
         User,
         on_delete=CASCADE,
-        related_name='couple_user_two'
+        related_name='couple_user_two',
+        null=True
     )
 
     def __str__(self):
@@ -72,6 +73,7 @@ class LikedNames(models.Model):
         on_delete=models.CASCADE, 
         related_name='liked_names'
     )
+    matched =  models.BooleanField(null=True)
 
     def __str__(self):
         return f'User: {self.usercouple_id} - Liked Name: {self.name_id}'

@@ -1,5 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet
+from django.urls import path
+from .views import NewUser
 
 router = DefaultRouter()
 
@@ -12,4 +14,8 @@ router.register(r'baby-names', BabyNamesViewSet, basename='baby-names'),
 router.register(r'liked-names', LikedNamesViewSet,
                 basename='liked-names')
 
-urlpatterns = router.urls
+urlpatterns=[
+     path('users/', NewUser.as_view())
+]
+
+urlpatterns += router.urls

@@ -49,7 +49,6 @@ class UserNamesPool(models.Model):
     def __str__(self):
         return f'Pool {self.id} - User: {self.user}'
 
-
 # Stores all baby names.  Pools pull from this list.
 class BabyName(models.Model):
     baby_name = models.CharField(max_length=100)

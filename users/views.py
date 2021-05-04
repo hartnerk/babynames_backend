@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from django.contrib.auth.models import User
 from .models import UserPreferences, UserCouple, UserNamesPool, BabyName, LikedName
 from . serializers import UserSerializer, UserPreferencesSerializer, UserCoupleSerializer, UserNamesPoolSerializer, BabyNameSerializer, LikedNameSerializer
@@ -25,6 +25,7 @@ class UserNamesPoolViewSet(viewsets.ModelViewSet):
 
 
 class BabyNameViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
     queryset = BabyName.objects.all()
     serializer_class = BabyNameSerializer
 

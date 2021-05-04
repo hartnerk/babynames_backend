@@ -19,6 +19,7 @@ distro==1.4.0
 distro-info===0.23ubuntu1
 Django==3.2
 django-allauth==0.44.0
+django-cors-headers==3.7.0
 django-cors-middleware==1.5.0
 django-oauth-toolkit==1.5.0
 django-rest-auth==0.9.5

@@ -17,7 +17,7 @@ class BabyNamesSerializer(serializers.ModelSerializer):
 
 
 class UserNamePoolsSerializer(serializers.ModelSerializer):
-    name = BabyNameSerializer(many=True)
+    name = BabyNamesSerializer(many=True)
 
     class Meta:
         model = UserNamePools
@@ -25,7 +25,7 @@ class UserNamePoolsSerializer(serializers.ModelSerializer):
 
 
 class LikedNamesSerializer(serializers.ModelSerializer):
-    liked_name = BabyNameSerializer()
+    liked_name = BabyNamesSerializer()
 
     class Meta:
         model = LikedNames

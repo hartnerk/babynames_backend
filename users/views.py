@@ -14,17 +14,17 @@ class UserPreferencesViewSet(viewsets.ModelViewSet):
     serializer_class = UserPreferencesSerializer
 
 
-class UserCoupleViewSet(viewsets.ModelViewSet):
+class UserCouplesViewSet(viewsets.ModelViewSet):
     queryset = UserCouples.objects.all()
     serializer_class = UserCouplesSerializer
 
 
-class UserNamesPoolViewSet(viewsets.ModelViewSet):
+class UserNamePoolsViewSet(viewsets.ModelViewSet):
     queryset = UserNamePools.objects.all()
     serializer_class = UserNamePoolsSerializer
 
 
-class BabyNameViewSet(viewsets.ModelViewSet):
+class BabyNamesViewSet(viewsets.ModelViewSet):
     queryset = BabyNames.objects.all()
     serializer_class = BabyNamesSerializer
 
@@ -34,6 +34,6 @@ class BabyNameViewSet(viewsets.ModelViewSet):
 #     serializer_class = BabyNameSerializer
 
 
-class LikedNameViewSet(viewsets.ModelViewSet):
+class LikedNamesViewSet(viewsets.ModelViewSet):
     queryset = LikedNames.objects.all()
     serializer_class = LikedNamesSerializer

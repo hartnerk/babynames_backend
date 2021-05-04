@@ -23,7 +23,7 @@ class UserCouples(models.Model):
 # Adds name gender and origin preference fields.
 class UserPreferences(models.Model):
     usercouple_id = models.OneToOneField(
-        UserCouple,
+        UserCouples,
         on_delete=models.CASCADE,
         related_name='preferences', 
         primary_key=True
@@ -49,12 +49,12 @@ class BabyNames(models.Model):
 # ?? User's pool will be combined with partner's pool on the frontend to create full list of names?? 
 class UserNamePools(models.Model):
     usercouple_id = models.OneToOneField(
-        UserCouple,
+        UserCouples,
         on_delete=CASCADE,
         related_name='names_pool', 
         primary_key=True
     )
-    names = models.ManyToManyField(BabyName, related_name='names_pool')
+    names = models.ManyToManyField(BabyNames, related_name='names_pool')
 
     def __str__(self):
         return f'Pool {self.usercouple_id} - Names: {self.names}'
@@ -63,12 +63,12 @@ class UserNamePools(models.Model):
 # Join table for a user and their liked names
 class LikedNames(models.Model):
     usercouple_id = models.ForeignKey(
-        UserCouple,
+        UserCouples,
         on_delete=models.CASCADE,
         related_name='liked_names'
     )
     name_id = models.ForeignKey(
-        BabyName,
+        BabyNames,
         on_delete=models.CASCADE, 
         related_name='liked_names'
     )

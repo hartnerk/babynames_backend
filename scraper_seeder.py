@@ -132,7 +132,7 @@ curs = conn.cursor()
 
 curs.execute('DROP TABLE IF EXISTS users_babynames;')
 curs.execute('''CREATE TABLE IF NOT EXISTS users_babynames(
-                id SERIAL PRIMARY KEY,
+                id integer PRIMARY KEY,
                 baby_name varchar(100),
                 gender varchar(6) NULL,
                 usage varchar(150)
@@ -141,7 +141,7 @@ curs.execute('''CREATE TABLE IF NOT EXISTS users_babynames(
 k = 0
 while k < len(url_list):
     for name_data in total_name_data[k]:
-        curs.execute('INSERT INTO users_babynames (baby_name, gender, usage) VALUES ( :baby_name, :gender, :usage);', name_data)
+        curs.execute('INSERT INTO users_babynames (baby_name, gender, usage) VALUES (:baby_name, :gender, :usage);', name_data)
         #print(name_data)
     k += 1
 

@@ -1,7 +1,7 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from django.contrib.auth.models import User
-from .models import UserPreferences, UserCouple, UserNamesPool, BabyName, LikedName
-from . serializers import UserSerializer, UserPreferencesSerializer, UserCoupleSerializer, UserNamesPoolSerializer, BabyNameSerializer, LikedNameSerializer
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
+from . serializers import UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -14,27 +14,26 @@ class UserPreferencesViewSet(viewsets.ModelViewSet):
     serializer_class = UserPreferencesSerializer
 
 
-class UserCoupleViewSet(viewsets.ModelViewSet):
-    queryset = UserCouple.objects.all()
-    serializer_class = UserCoupleSerializer
+class UserCouplesViewSet(viewsets.ModelViewSet):
+    queryset = UserCouples.objects.all()
+    serializer_class = UserCouplesSerializer
 
 
-class UserNamesPoolViewSet(viewsets.ModelViewSet):
-    queryset = UserNamesPool.objects.all()
-    serializer_class = UserNamesPoolSerializer
+class UserNamePoolsViewSet(viewsets.ModelViewSet):
+    queryset = UserNamePools.objects.all()
+    serializer_class = UserNamePoolsSerializer
 
 
-class BabyNameViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = BabyName.objects.all()
-    serializer_class = BabyNameSerializer
+class BabyNamesViewSet(viewsets.ModelViewSet):
+    queryset = BabyNames.objects.all()
+    serializer_class = BabyNamesSerializer
 
 
-class BabyNameViewSet(viewsets.ModelViewSet):
-    queryset = BabyName.objects.all()
-    serializer_class = BabyNameSerializer
+# class BabyNameViewSet(viewsets.ModelViewSet):
+#     queryset = BabyName.objects.all()
+#     serializer_class = BabyNameSerializer
 
 
-class LikedNameViewSet(viewsets.ModelViewSet):
-    queryset = LikedName.objects.all()
-    serializer_class = LikedNameSerializer
+class LikedNamesViewSet(viewsets.ModelViewSet):
+    queryset = LikedNames.objects.all()
+    serializer_class = LikedNamesSerializer

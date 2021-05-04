@@ -1,49 +1,49 @@
 from django.db.models import fields
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserPreferences, UserCouple, UserNamesPool, BabyName, LikedName
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
 
 
 class UserPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPreferences
-        fields = ['id', 'user', 'gender', 'origin']
+        fields = ['usercouple_id', 'gender', 'origin']
 
 
-class BabyNameSerializer(serializers.ModelSerializer):
+class BabyNamesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BabyName
+        model = BabyNames
         fields = ['id', 'baby_name', 'gender', 'usage']
 
 
-class UserNamesPoolSerializer(serializers.ModelSerializer):
-    name = BabyNameSerializer(many=True)
+class UserNamePoolsSerializer(serializers.ModelSerializer):
+    name = BabyNamesSerializer(many=True)
 
     class Meta:
-        model = UserNamesPool
-        fields = ['id', 'name']
+        model = UserNamePools
+        fields = ['usercouple_id', 'names']
 
 
-class LikedNameSerializer(serializers.ModelSerializer):
-    liked_name = BabyNameSerializer()
+class LikedNamesSerializer(serializers.ModelSerializer):
+    liked_name = BabyNamesSerializer()
 
     class Meta:
-        model = LikedName
-        fields = ['id', 'liked_name']
+        model = LikedNames
+        fields = ['usercouple_id', 'name_id']
 
 
-class UserCoupleSerializer(serializers.ModelSerializer):
+class UserCouplesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserCouple
+        model = UserCouples
         fields = ['id', 'user_one', 'user_two']
 
 
 class UserSerializer(serializers.ModelSerializer):
     preferences = UserPreferencesSerializer(many=True, required=False)
-    names_pool = UserNamesPoolSerializer(many=True, required=False)
-    liked_names = LikedNameSerializer(many=True, required=False)
-    couple_user_one = UserCoupleSerializer(many=True, required=False)
-    couple_user_two = UserCoupleSerializer(many=True, required=False)
+    names_pool = UserNamePoolsSerializer(many=True, required=False)
+    liked_names = LikedNamesSerializer(many=True, required=False)
+    couple_user_one = UserCouplesSerializer(many=True, required=False)
+    couple_user_two = UserCouplesSerializer(many=True, required=False)
 
     class Meta:
         model = User

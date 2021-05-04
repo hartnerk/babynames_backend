@@ -1,13 +1,23 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions, status
 from django.contrib.auth.models import User
+from rest_framework.response import Response
 from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
-from . serializers import UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
+from rest_framework.views import APIView
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
 
+class NewUser(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, format='json'):
+        # print(request)
+        serializer = NewUserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
 
 class UserPreferencesViewSet(viewsets.ModelViewSet):
     queryset = UserPreferences.objects.all()

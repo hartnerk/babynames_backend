@@ -52,9 +52,15 @@ class LikedNamesSerializer(serializers.ModelSerializer):
 
 
 class UserCouplesSerializer(serializers.ModelSerializer):
+
+    preferences = UserPreferencesSerializer(required=False, read_only=True)
+    names_pool = UserNamePoolsSerializer(required=False, read_only=True)
+    liked_names = LikedNamesSerializer(many=True, required=False, read_only=True)
+
     class Meta:
         model = UserCouples
-        fields = ['id', 'user_one', 'user_two']
+        fields = ['id', 'user_one', 'user_two', 'preferences',
+                  'names_pool', 'liked_names']
 
 
 class UserSerializer(serializers.ModelSerializer):

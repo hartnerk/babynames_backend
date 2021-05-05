@@ -7,7 +7,7 @@ from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, Like
 class NewUserSerializer(serializers.ModelSerializer):
     # token = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True)
-     
+
     # def get_token(self, obj):
     #     token= {test_token : 'thisisAteesTT'}
     #     return token
@@ -25,8 +25,6 @@ class NewUserSerializer(serializers.ModelSerializer):
         fields = ('username', 'password')
 
 
-
-                  
 class UserPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPreferences
@@ -48,8 +46,6 @@ class UserNamePoolsSerializer(serializers.ModelSerializer):
 
 
 class LikedNamesSerializer(serializers.ModelSerializer):
-    name_id = BabyNamesSerializer()
-
     class Meta:
         model = LikedNames
         fields = ['usercouple_id', 'name_id']
@@ -68,7 +64,6 @@ class UserCouplesSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    
     couple_user_one = UserCouplesSerializer(many=True, required=False)
     couple_user_two = UserCouplesSerializer(many=True, required=False)
 

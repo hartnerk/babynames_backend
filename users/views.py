@@ -46,5 +46,11 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
 
 
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
-    queryset = LikedNames.objects.all()
     serializer_class = LikedNamesSerializer
+
+    def get_queryset(self):
+        queryset = LikedNames.objects.all()
+        matched = self.request.query_params.get('matched')
+        if matched is not None:
+            queryset = queryset.filter(matched=matched)
+        return queryset

@@ -1,7 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet
 from django.urls import path
-from .views import NewUser
+from .views import NewUser, get_names_from_prefs
 
 router = DefaultRouter()
 
@@ -15,7 +15,8 @@ router.register(r'liked-names', LikedNamesViewSet,
                 basename='liked-names')
 
 urlpatterns=[
-     path('users/', NewUser.as_view())
+     path('users/', NewUser.as_view()),
+     path('debug/', get_names_from_prefs)
 ]
 
 urlpatterns += router.urls

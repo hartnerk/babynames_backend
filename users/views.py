@@ -15,16 +15,30 @@ def get_names_from_prefs(request):
     side1 = request.user.couple_user_one.first()
     side2 = request.user.couple_user_two.first()
 
-    # Need to check if gender, usage prefs exist for input user.
-    
+    # breakpoint()
+
     if side1:
         couple = side1
-        query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
         serializer = BabyNamesSerializer(query, many=True)
 
     elif side2:
         couple = side2
-        query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
         serializer = BabyNamesSerializer(query, many=True)
 
     else:

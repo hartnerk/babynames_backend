@@ -16,7 +16,7 @@ router.register(r'liked-names', LikedNamesViewSet,
 
 urlpatterns=[
      path('users/', NewUser.as_view()),
-     path('debug/', get_names_from_prefs)
+     path('pref_names/', get_names_from_prefs)
 ]
 
 urlpatterns += router.urls

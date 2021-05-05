@@ -23,9 +23,6 @@ class NewUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'password')
-
-
-
                   
 class UserPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,3 +69,17 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'preferences',
                   'names_pool', 'liked_names', 'couple_user_one', 'couple_user_two']
+
+class NewCoupleSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        # user_one=
+        # user_two=
+        instance = self.Meta.model(**validated_data)
+        return instance
+
+    class Meta:
+        model = UserCouples
+        fields = ('user_one', 'user_two')
+
+
+                  

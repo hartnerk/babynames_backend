@@ -29,8 +29,8 @@ class UserPreferences(models.Model):
         related_name='preferences', 
         primary_key=True
     )
-    gender = models.CharField(max_length=15)
-    origin = models.CharField(max_length=30)
+    gender = models.CharField(max_length=15, blank=True)
+    origin = models.CharField(max_length=30, blank=True)
 
     def __str__(self):
         return f'UserCouple ID: {self.usercouple_id} - Preferences: {self.gender}, {self.origin}'

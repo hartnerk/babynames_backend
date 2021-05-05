@@ -1,10 +1,53 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
 from rest_framework.views import APIView
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
 from rest_framework_extensions.mixins import NestedViewSetMixin
+
+import sqlite3 
+
+
+@api_view(['GET'])
+def get_names_from_prefs(request):
+
+    side1 = request.user.couple_user_one.first()
+    side2 = request.user.couple_user_two.first()
+
+    # breakpoint()
+
+    if side1:
+        couple = side1
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        serializer = BabyNamesSerializer(query, many=True)
+
+    elif side2:
+        couple = side2
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        serializer = BabyNamesSerializer(query, many=True)
+
+    else:
+        serializer = BabyNamesSerializer(BabyNames.objects.none(), many=True)
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 class NewUser(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -38,11 +81,6 @@ class UserNamePoolsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 class BabyNamesViewSet(viewsets.ModelViewSet):
     queryset = BabyNames.objects.all()
     serializer_class = BabyNamesSerializer
-
-
-# class BabyNameViewSet(viewsets.ModelViewSet):
-#     queryset = BabyName.objects.all()
-#     serializer_class = BabyNameSerializer
 
 
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):

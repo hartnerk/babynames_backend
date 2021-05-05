@@ -73,7 +73,10 @@ class LikedNames(models.Model):
         on_delete=models.CASCADE, 
         related_name='liked_names'
     )
-    matched =  models.BooleanField(null=True)
+    matched =  models.BooleanField(null=True, default=False)
+    
+    # class Meta:
+    #     unique_together = ('usercouple_id', 'name_id')
 
     def __str__(self):
         return f'User: {self.usercouple_id} - Liked Name: {self.name_id}'

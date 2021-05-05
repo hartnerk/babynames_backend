@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from rest_framework.response import Response
 from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
 from rest_framework.views import APIView
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
 class NewUser(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -19,17 +20,17 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class UserPreferencesViewSet(viewsets.ModelViewSet):
+class UserPreferencesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserPreferences.objects.all()
     serializer_class = UserPreferencesSerializer
 
 
-class UserCouplesViewSet(viewsets.ModelViewSet):
+class UserCouplesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserCouples.objects.all()
     serializer_class = UserCouplesSerializer
 
 
-class UserNamePoolsViewSet(viewsets.ModelViewSet):
+class UserNamePoolsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserNamePools.objects.all()
     serializer_class = UserNamePoolsSerializer
 
@@ -44,6 +45,6 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
 #     serializer_class = BabyNameSerializer
 
 
-class LikedNamesViewSet(viewsets.ModelViewSet):
+class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = LikedNames.objects.all()
     serializer_class = LikedNamesSerializer

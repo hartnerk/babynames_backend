@@ -48,8 +48,15 @@ class UserNamePoolsSerializer(serializers.ModelSerializer):
 class LikedNamesSerializer(serializers.ModelSerializer):
     class Meta:
         model = LikedNames
-        fields = ['usercouple_id', 'name_id']
+        fields = ['usercouple_id', 'name_id', 'matched']
 
+    def create(self, validated_data):
+        instance, created = self.Meta.model.objects.get_or_create(**validated_data)
+        if not created:
+            instance.matched = True
+            instance.save()
+            return instance
+        return instance
 
 class UserCouplesSerializer(serializers.ModelSerializer):
     class Meta:

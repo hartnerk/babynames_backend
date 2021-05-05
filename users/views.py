@@ -11,10 +11,12 @@ import sqlite3
 
 @api_view(['GET'])
 def get_names_from_prefs(request):
-    
+
     side1 = request.user.couple_user_one.first()
     side2 = request.user.couple_user_two.first()
 
+    # Need to check if gender, usage prefs exist for input user.
+    
     if side1:
         couple = side1
         query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)

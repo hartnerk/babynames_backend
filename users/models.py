@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db.models.deletion import CASCADE
 
 # Join table for two users to reference eachother as partners.
+
+
 class UserCouples(models.Model):
     user_one = models.ForeignKey(
         User,
@@ -26,7 +28,7 @@ class UserPreferences(models.Model):
     usercouple_id = models.OneToOneField(
         UserCouples,
         on_delete=models.CASCADE,
-        related_name='preferences', 
+        related_name='preferences',
         primary_key=True
     )
     gender = models.CharField(max_length=15, blank=True)
@@ -47,12 +49,12 @@ class BabyNames(models.Model):
 
 
 # Join table for user and their pool of names
-# ?? User's pool will be combined with partner's pool on the frontend to create full list of names?? 
+# ?? User's pool will be combined with partner's pool on the frontend to create full list of names??
 class UserNamePools(models.Model):
     usercouple_id = models.OneToOneField(
         UserCouples,
         on_delete=CASCADE,
-        related_name='names_pool', 
+        related_name='names_pool',
         primary_key=True
     )
     names = models.ManyToManyField(BabyNames, related_name='names_pool')
@@ -70,11 +72,12 @@ class LikedNames(models.Model):
     )
     name_id = models.ForeignKey(
         BabyNames,
-        on_delete=models.CASCADE, 
+        on_delete=models.CASCADE,
         related_name='liked_names'
     )
-    matched =  models.BooleanField(null=True, default=False)
-    
+    matched = models.BooleanField(null=True, default=False)
+    order = models.IntegerField()
+
     # class Meta:
     #     unique_together = ('usercouple_id', 'name_id')
 

@@ -1,9 +1,14 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User
+from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.views import APIView
+import json
+from django.http import JsonResponse
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
@@ -52,7 +57,6 @@ def get_names_from_prefs(request):
 class NewUser(APIView):
     permission_classes = (permissions.AllowAny,)
     def post(self, request, format='json'):
-        # print(request)
         serializer = NewUserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -60,6 +64,13 @@ class NewUser(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request, format='json'):
+        serializer = NewUserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -86,6 +97,31 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
 
+@csrf_exempt
+@api_view(['POST'])
+def set_couple(request):
+    user2 = User.objects.get(username=request.data['partnerUserame'])        
+    couple = UserCouples.objects.create(user_one=request.user, user_two=user2)
+    couple.save()
+    serializer = UserCouplesSerializer(couple)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@csrf_exempt
+@api_view(['POST'])
+def set_preferences(request):
+    if request.user.couple_user_one.first():
+         usercouple_id = request.user.couple_user_one.first()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+    else:
+        usercouple_id =''
+    gender = request.data['gender']
+    origin = request.data['origin']
+    couplePreferences = UserPreferences.objects.create(usercouple_id=usercouple_id, gender=gender, origin=origin)
+    couplePreferences.save()
+    serializer=UserPreferencesSerializer(couplePreferences)
+    
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
     def get_queryset(self):
         queryset = LikedNames.objects.all()
         matched = self.request.query_params.get('matched')

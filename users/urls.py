@@ -23,7 +23,7 @@ router.register(r'user-list', UserViewSet, basename='user-list'),
 # router.register(r'preferences', UserPreferencesViewSet,
 #                 basename='preferences'),
 # router.register(r'couples', UserCouplesViewSet, basename='couples'),
-router.register(r'name-pools', UserNamePoolsViewSet, basename='name-pools'),
+# router.register(r'name-pools', UserNamePoolsViewSet, basename='name-pools'),
 router.register(r'baby-names', BabyNamesViewSet, basename='baby-names'),
 
 urlpatterns=[
@@ -31,7 +31,9 @@ urlpatterns=[
      path('couples/', views.set_couple, name='set_couple'),
      path('preferences/', views.set_preferences, name='set_preferences'),
      path('pref_names/', get_names_from_prefs),
-     path('add_name/', views.add_my_name, name='add_my_name')
+     path('add_name/', views.add_my_name, name='add_my_name'),
+     path('set_couples/', views.set_couple, name='set_couple'),
+     path('set_preferences/', views.set_preferences, name='set_preferences'),
 ]
 
 urlpatterns += router.urls

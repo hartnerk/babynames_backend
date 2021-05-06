@@ -109,15 +109,12 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
     queryset = LikedNames.objects.all()
-    
-
     def get_queryset(self):
-        queryset = LikedNames.objects.all()
+        queryset = super().get_queryset()
         matched = self.request.query_params.get('matched')
         if matched is not None:
             queryset = queryset.filter(matched=matched)
         return queryset
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -128,7 +125,7 @@ def set_couple(request):
     serializer = UserCouplesSerializer(couple)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-#@csrf_exempt
+@csrf_exempt
 @api_view(['POST'])
 def set_preferences(request):
     #breakpoint()
@@ -148,4 +145,3 @@ def set_preferences(request):
     serializer=UserPreferencesSerializer(couplePreferences)
     
     return Response(serializer.data, status=status.HTTP_201_CREATED)
-    

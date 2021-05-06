@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -8,6 +9,50 @@ from rest_framework.views import APIView
 import json
 from django.http import JsonResponse
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
+from rest_framework_extensions.mixins import NestedViewSetMixin
+
+import sqlite3 
+
+
+@api_view(['GET'])
+def get_names_from_prefs(request):
+
+    side1 = request.user.couple_user_one.first()
+    side2 = request.user.couple_user_two.first()
+
+    # breakpoint()
+
+    if side1:
+        couple = side1
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        serializer = BabyNamesSerializer(query, many=True)
+
+    elif side2:
+        couple = side2
+        if couple.preferences.gender == '' and couple.preferences.origin == '':
+            query = BabyNames.objects.all()
+        elif couple.preferences.gender == '':
+            query = BabyNames.objects.filter(usage=couple.preferences.origin)
+        elif couple.preferences.origin == '':
+            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+        else:
+            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+        serializer = BabyNamesSerializer(query, many=True)
+
+    else:
+        serializer = BabyNamesSerializer(BabyNames.objects.none(), many=True)
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 class NewUser(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -29,17 +74,17 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-class UserPreferencesViewSet(viewsets.ModelViewSet):
+class UserPreferencesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserPreferences.objects.all()
     serializer_class = UserPreferencesSerializer
 
 
-class UserCouplesViewSet(viewsets.ModelViewSet):
+class UserCouplesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserCouples.objects.all()
     serializer_class = UserCouplesSerializer
 
 
-class UserNamePoolsViewSet(viewsets.ModelViewSet):
+class UserNamePoolsViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserNamePools.objects.all()
     serializer_class = UserNamePoolsSerializer
 
@@ -49,13 +94,7 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
     serializer_class = BabyNamesSerializer
 
 
-# class BabyNameViewSet(viewsets.ModelViewSet):
-#     queryset = BabyName.objects.all()
-#     serializer_class = BabyNameSerializer
-
-
-class LikedNamesViewSet(viewsets.ModelViewSet):
-    queryset = LikedNames.objects.all()
+class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
 
 @csrf_exempt
@@ -83,3 +122,9 @@ def set_preferences(request):
     serializer=UserPreferencesSerializer(couplePreferences)
     
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def get_queryset(self):
+        queryset = LikedNames.objects.all()
+        matched = self.request.query_params.get('matched')
+        if matched is not None:
+            queryset = queryset.filter(matched=matched)
+        return queryset

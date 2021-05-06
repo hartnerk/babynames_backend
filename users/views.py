@@ -48,7 +48,19 @@ def get_names_from_prefs(request):
         serializer = BabyNamesSerializer(query, many=True)
 
     else:
-        serializer = BabyNamesSerializer(BabyNames.objects.none(), many=True)
+        query = BabyNames.objects.none()
+        serializer = BabyNamesSerializer(query, many=True)
+
+    # breakpoint()
+    names_list = list(query)
+    # breakpoint()
+    if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
+        instance = UserNamePools.objects.create(usercouple_id=couple)
+        instance.names.set(names_list)
+    else:
+        instance = UserNamePools.objects.get(usercouple_id=couple)
+        instance.names.set(names_list)
+    # breakpoint()
     
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -108,7 +120,7 @@ class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 @api_view(['POST'])
 def set_couple(request):
     user2 = User.objects.get(username=request.data['partnerUserame'])        
-    couple = UserCouples.objects.create(user_one=request.user, user_two=user2)
+    couple = UserCouples.objects.update_or_create(user_one=request.user, defaults={'user_two':user2})[0]
     couple.save()
     serializer = UserCouplesSerializer(couple)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -116,6 +128,7 @@ def set_couple(request):
 @csrf_exempt
 @api_view(['POST'])
 def set_preferences(request):
+    #breakpoint()
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():
@@ -124,9 +137,11 @@ def set_preferences(request):
         usercouple_id =''
     gender = request.data['gender']
     origin = request.data['origin']
-    couplePreferences = UserPreferences.objects.create(usercouple_id=usercouple_id, gender=gender, origin=origin)
+
+    couplePreferences = UserPreferences.objects.update_or_create(usercouple_id=usercouple_id, defaults={'gender': gender, 'origin':origin})[0]
+    print(couplePreferences)
+    # breakpoint()
     couplePreferences.save()
     serializer=UserPreferencesSerializer(couplePreferences)
     
     return Response(serializer.data, status=status.HTTP_201_CREATED)
-

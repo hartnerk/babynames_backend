@@ -29,8 +29,8 @@ class UserPreferences(models.Model):
         related_name='preferences', 
         primary_key=True
     )
-    gender = models.CharField(max_length=15)
-    origin = models.CharField(max_length=30)
+    gender = models.CharField(max_length=15, blank=True)
+    origin = models.CharField(max_length=30, blank=True)
 
     def __str__(self):
         return f'UserCouple ID: {self.usercouple_id} - Preferences: {self.gender}, {self.origin}'
@@ -73,7 +73,10 @@ class LikedNames(models.Model):
         on_delete=models.CASCADE, 
         related_name='liked_names'
     )
-    matched =  models.BooleanField(null=True)
+    matched =  models.BooleanField(null=True, default=False)
+    
+    # class Meta:
+    #     unique_together = ('usercouple_id', 'name_id')
 
     def __str__(self):
         return f'User: {self.usercouple_id} - Liked Name: {self.name_id}'

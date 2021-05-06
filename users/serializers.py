@@ -7,7 +7,7 @@ from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, Like
 class NewUserSerializer(serializers.ModelSerializer):
     # token = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True)
-     
+
     # def get_token(self, obj):
     #     token= {test_token : 'thisisAteesTT'}
     #     return token
@@ -23,7 +23,8 @@ class NewUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'password')
-                  
+
+
 class UserPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPreferences
@@ -37,7 +38,7 @@ class BabyNamesSerializer(serializers.ModelSerializer):
 
 
 class UserNamePoolsSerializer(serializers.ModelSerializer):
-    name = BabyNamesSerializer(many=True)
+    names = BabyNamesSerializer(many=True)
 
     class Meta:
         model = UserNamePools
@@ -45,41 +46,34 @@ class UserNamePoolsSerializer(serializers.ModelSerializer):
 
 
 class LikedNamesSerializer(serializers.ModelSerializer):
-    liked_name = BabyNamesSerializer()
-
     class Meta:
         model = LikedNames
-        fields = ['usercouple_id', 'name_id']
+        fields = ['usercouple_id', 'name_id', 'matched']
 
+    def create(self, validated_data):
+        instance, created = self.Meta.model.objects.get_or_create(**validated_data)
+        if not created:
+            instance.matched = True
+            instance.save()
+            return instance
+        return instance
 
 class UserCouplesSerializer(serializers.ModelSerializer):
+
+    preferences = UserPreferencesSerializer(required=False, read_only=True)
+    names_pool = UserNamePoolsSerializer(required=False, read_only=True)
+    liked_names = LikedNamesSerializer(many=True, required=False, read_only=True)
+
     class Meta:
         model = UserCouples
-        fields = ['id', 'user_one', 'user_two']
+        fields = ['id', 'user_one', 'user_two', 'preferences',
+                  'names_pool', 'liked_names']
 
 
 class UserSerializer(serializers.ModelSerializer):
-    preferences = UserPreferencesSerializer(many=True, required=False)
-    names_pool = UserNamePoolsSerializer(many=True, required=False)
-    liked_names = LikedNamesSerializer(many=True, required=False)
     couple_user_one = UserCouplesSerializer(many=True, required=False)
     couple_user_two = UserCouplesSerializer(many=True, required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'preferences',
-                  'names_pool', 'liked_names', 'couple_user_one', 'couple_user_two']
-
-class NewCoupleSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        # user_one=
-        # user_two=
-        instance = self.Meta.model(**validated_data)
-        return instance
-
-    class Meta:
-        model = UserCouples
-        fields = ('user_one', 'user_two')
-
-
-                  
+        fields = ['id', 'username', 'couple_user_one', 'couple_user_two']

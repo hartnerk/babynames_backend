@@ -59,21 +59,27 @@ class LikedNamesViewSet(viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
 
 @csrf_exempt
+@api_view(['POST'])
 def set_couple(request):
-    if request.method=='POST':
-        print('in SET USER')
-        return JsonResponse({}, status=status.HTTP_200_OK)
-    #     data = json.load(request)  
-    #     print('in SET USER', data)
-    #     # form = AlertForm(data)
-    #     # if form.is_valid():
-    #     #     alert_form = form.save(commit=False)
-    #     #     form.save()
-    #     #     new_data = json.loads(serialize('json', [alert_form]))
-    #     #     return JsonResponse(data=new_data, status=200, safe=False)
+    user2 = User.objects.get(username=request.data['partnerUserame'])        
+    couple = UserCouples.objects.create(user_one=request.user, user_two=user2)
+    couple.save()
+    serializer = UserCouplesSerializer(couple)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@csrf_exempt
+@api_view(['POST'])
+def set_preferences(request):
+    if request.user.couple_user_one.first():
+         usercouple_id = request.user.couple_user_one.first()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+    else:
+        usercouple_id =''
+    gender = request.data['gender']
+    origin = request.data['origin']
+    couplePreferences = UserPreferences.objects.create(usercouple_id=usercouple_id, gender=gender, origin=origin)
+    couplePreferences.save()
+    serializer=UserPreferencesSerializer(couplePreferences)
     
-    # user1 = User.objects.filter(id=request.user.id)
-    # user1 = UserSerializer(user1)
-    # user2 = User.objects.filter(username=data['partnerName'])
-    # user2 = UserSerializer(user2)   
-    # return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)

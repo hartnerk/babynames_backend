@@ -28,8 +28,8 @@ router.register(r'baby-names', BabyNamesViewSet, basename='baby-names'),
 
 urlpatterns=[
      path('users/', views.NewUser.as_view()),
-     path('couples/', views.set_couple, name='set_couple'),
-     path('preferences/', views.set_preferences, name='set_preferences'),
+     path('set_couples/', views.set_couple, name='set_couple'),
+     path('set_preferences/', views.set_preferences, name='set_preferences'),
      path('pref_names/', get_names_from_prefs)
 ]
 

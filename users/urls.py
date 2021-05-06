@@ -30,7 +30,8 @@ urlpatterns=[
      path('users/', views.NewUser.as_view()),
      path('couples/', views.set_couple, name='set_couple'),
      path('preferences/', views.set_preferences, name='set_preferences'),
-     path('pref_names/', get_names_from_prefs)
+     path('pref_names/', get_names_from_prefs),
+     path('add_name/', views.add_my_name, name='add_my_name')
 ]
 
 urlpatterns += router.urls

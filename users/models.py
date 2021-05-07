@@ -65,6 +65,7 @@ class UserNamePools(models.Model):
 
 # Join table for a user and their liked names
 class LikedNames(models.Model):
+    
     usercouple_id = models.ForeignKey(
         UserCouples,
         on_delete=models.CASCADE,
@@ -82,4 +83,22 @@ class LikedNames(models.Model):
     #     unique_together = ('usercouple_id', 'name_id')
 
     def __str__(self):
-        return f'User: {self.usercouple_id} - Liked Name: {self.name_id}'
+        return f'UserCouple: {self.usercouple_id} - Liked Name: {self.name_id}'
+
+
+class UserLikedNames(models.Model):
+
+    user_id = models.ForeignKey(User, 
+        on_delete=models.CASCADE, 
+        related_name='user_liked_names')
+
+    name_id = models.ForeignKey(
+        BabyNames,
+        on_delete=models.CASCADE,
+        related_name='user_liked_names'
+    )
+
+    order = models.IntegerField()
+
+    def __str__(self):
+        return f'User: {self.user_id} - Liked Name: {self.name_id}'

@@ -59,6 +59,11 @@ class LikedNamesSerializer(serializers.ModelSerializer):
             return instance
         return instance
 
+class UserLikedNamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LikedNames
+        fields = ['id', 'user_id', 'name_id', 'order']
+
 
 class UserCouplesSerializer(serializers.ModelSerializer):
 
@@ -76,7 +81,8 @@ class UserCouplesSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     couple_user_one = UserCouplesSerializer(many=True, required=False)
     couple_user_two = UserCouplesSerializer(many=True, required=False)
+    user_liked_names = UserLikedNamesSerializer(many=True, required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'couple_user_one', 'couple_user_two']
+        fields = ['id', 'username', 'couple_user_one', 'couple_user_two', 'user_liked_names']

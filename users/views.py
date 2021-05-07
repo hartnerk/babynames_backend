@@ -67,7 +67,9 @@ def get_names_from_prefs(request):
     # breakpoint()
     names_list = list(query)
     #breakpoint()
-    if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
+    #if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
+
+    if(UserNamePools.objects.filter(usercouple_id=couple).names.exists()):
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
     else:
@@ -118,6 +120,9 @@ class BabyNamesViewSet(viewsets.ModelViewSet):
     queryset = BabyNames.objects.all()
     serializer_class = BabyNamesSerializer
 
+class UserLikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = UserLikedNames.objects.all()
+    serializer_class = UserLikedNamesSerializer
 
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer

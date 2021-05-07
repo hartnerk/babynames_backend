@@ -67,7 +67,7 @@ def get_names_from_prefs(request):
     # breakpoint()
     names_list = list(query)
     #breakpoint()
-    if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
+    if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
     else:

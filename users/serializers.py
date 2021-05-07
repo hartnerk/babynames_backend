@@ -1,7 +1,7 @@
 from django.db.models import fields
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, UserLikedNames
 
 
 class NewUserSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class LikedNamesSerializer(serializers.ModelSerializer):
 
 class UserLikedNamesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LikedNames
+        model = UserLikedNames
         fields = ['id', 'user_id', 'name_id', 'order']
 
 

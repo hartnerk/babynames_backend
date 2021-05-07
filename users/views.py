@@ -3,12 +3,12 @@ from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User, UserLikedNames
 from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.views import APIView
 import json
 from django.http import JsonResponse
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
@@ -16,7 +16,7 @@ import sqlite3
 
 @api_view(['GET'])
 def get_user_info(request):
-    
+    # breakpoint()
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():
@@ -24,8 +24,14 @@ def get_user_info(request):
     else:
         usercouple_id = ''
 
-    serializer=UserCouplesSerializer(usercouple_id)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    userdata = {'user_id': f'{request.user.id}',
+                'username': f'{request.user.username}'}
+
+    if not usercouple_id == '':          
+        serializer=UserCouplesSerializer(usercouple_id)
+        userdata.update(serializer.data)
+    #breakpoint()
+    return Response(userdata, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -69,7 +75,7 @@ def get_names_from_prefs(request):
     #breakpoint()
     #if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
 
-    if(UserNamePools.objects.filter(usercouple_id=couple).names.exists()):
+    if not (UserNamePools.objects.filter(usercouple_id=couple).exists()):
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
     else:
@@ -90,7 +96,7 @@ class NewUser(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     permission_classes = (permissions.AllowAny,)
     def post(self, request, format='json'):
         serializer = NewUserSerializer(data=request.data)

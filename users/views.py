@@ -67,7 +67,11 @@ def get_names_from_prefs(request):
 
     # breakpoint()
     names_list_full = list(query)
-    names_list = random.sample(names_list_full, 100)
+    if len(names_list_full) > 100:
+        names_list = random.sample(names_list_full, 100)
+    else:
+        names_list = names_list_full
+    # random.shuffle(names_list)
     #breakpoint()
     if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)

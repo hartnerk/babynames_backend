@@ -206,3 +206,27 @@ def add_my_name(request):
     serializer=UserNamePoolsSerializer(nameInPool)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+@csrf_exempt
+@api_view(['POST'])
+def match_order(request):
+    if request.user.couple_user_one.first():
+         usercouple_id = request.user.couple_user_one.first()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+    else:
+        usercouple_id =''
+    user1 = UserCouples.objects.filter(id=usercouple_id.id)[0].user_one
+    user2 = UserCouples.objects.filter(id=usercouple_id.id)[0].user_two
+    if user1.id == request.user.id:
+        user2_id = user2.id
+    else:
+        user2_id = user1.id
+    match_query = LikedNames.objects.all().filter(usercouple_id=usercouple_id).filter(matched=True)
+    for object in match_query:
+        user1Rank = UserLikedNames.objects.filter(user_id=request.user.id).filter(name_id=object.name_id)[0].order
+        user2Rank = UserLikedNames.objects.filter(user_id=user2_id).filter(name_id=object.name_id)[0].order
+        overallRank = user1Rank + user2Rank
+        object.order = overallRank
+        object.save()
+    return Response({"data":1}, status=status.HTTP_201_CREATED )
+

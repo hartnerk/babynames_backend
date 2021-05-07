@@ -14,6 +14,7 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 from django.db.models import Max
 
 import sqlite3 
+import random
 
 @api_view(['GET'])
 def get_user_info(request):
@@ -66,7 +67,12 @@ def get_names_from_prefs(request):
         serializer = BabyNamesSerializer(query, many=True)
 
     # breakpoint()
-    names_list = list(query)
+    names_list_full = list(query)
+    if len(names_list_full) > 100:
+        names_list = random.sample(names_list_full, 100)
+    else:
+        names_list = names_list_full
+    # random.shuffle(names_list)
     #breakpoint()
     if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)

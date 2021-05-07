@@ -11,8 +11,10 @@ from django.http import JsonResponse
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer
 from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
 from rest_framework_extensions.mixins import NestedViewSetMixin
+from django.db.models import Max
 
 import sqlite3 
+import random
 
 @api_view(['GET'])
 def get_user_info(request):
@@ -71,11 +73,14 @@ def get_names_from_prefs(request):
         serializer = BabyNamesSerializer(query, many=True)
 
     # breakpoint()
-    names_list = list(query)
+    names_list_full = list(query)
+    if len(names_list_full) > 100:
+        names_list = random.sample(names_list_full, 100)
+    else:
+        names_list = names_list_full
+    # random.shuffle(names_list)
     #breakpoint()
-    #if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
-
-    if not (UserNamePools.objects.filter(usercouple_id=couple).exists()):
+    if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
     else:
@@ -187,16 +192,17 @@ def add_my_name(request):
         usercouple_id =''
     name = request.data['customName']
     if(BabyNames.objects.filter(baby_name=name).exists()):
-        likename = LikedNames(usercouple_id=usercouple_id, name_id=BabyNames.objects.get(baby_name=name), matched=False)
+        # breakpoint()
+        likename = LikedNames(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=LikedNames.objects.filter(usercouple_id=1).aggregate(Max('order'))['order__max'])
         likename.save()
 
     else:
-        newName = BabyNames.objects.create(baby_name=name.set(), gender=request.data['gender'], usage='user_added')
+        newName = BabyNames.objects.create(baby_name=name, gender=request.data['gender'], usage='user_added')
         newName.save()
-        likename = LikedNames(usercouple_id=usercouple_id, name_id=newName.id, matched=False)
+        likename = LikedNames(usercouple_id=usercouple_id, name_id=newName, matched=False, order=LikedNames.objects.filter(usercouple_id=1).aggregate(Max('order'))['order__max'])
         likename.save()
     nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
-    newpool=nameInPool.names.add(BabyNames.objects.get(baby_name=name).id)
+    newpool=nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
     serializer=UserNamePoolsSerializer(nameInPool)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 

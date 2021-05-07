@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet
+from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet, UserLikedNamesViewSet
 from django.urls import path
 from . import views
 from .views import NewUser, get_names_from_prefs, get_user_info
@@ -10,7 +10,8 @@ class NestedDefaultRouter(NestedRouterMixin, DefaultRouter):
      pass
 
 router = NestedDefaultRouter()
-
+user_router = router.register(r'user_info', UserViewSet, basename='user_info')
+user_router.register(r'user-likes', UserLikedNamesViewSet, basename='user-likes', parents_query_lookups=['user_id'])
 couples_router = router.register(r'couples', UserCouplesViewSet, basename='couples')
 
 couples_router.register(r'liked-names', LikedNamesViewSet,

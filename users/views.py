@@ -13,6 +13,7 @@ from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSeri
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 import sqlite3 
+import random
 
 @api_view(['GET'])
 def get_user_info(request):
@@ -65,7 +66,8 @@ def get_names_from_prefs(request):
         serializer = BabyNamesSerializer(query, many=True)
 
     # breakpoint()
-    names_list = list(query)
+    names_list_full = list(query)
+    names_list = random.sample(names_list_full, 100)
     #breakpoint()
     if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)

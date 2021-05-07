@@ -14,6 +14,19 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 
 import sqlite3 
 
+@api_view(['GET'])
+def get_user_info(request):
+    
+    if request.user.couple_user_one.first():
+         usercouple_id = request.user.couple_user_one.first()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+    else:
+        usercouple_id = ''
+
+    serializer=UserCouplesSerializer(usercouple_id)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def get_names_from_prefs(request):
@@ -30,9 +43,9 @@ def get_names_from_prefs(request):
         elif couple.preferences.gender == '':
             query = BabyNames.objects.filter(usage=couple.preferences.origin)
         elif couple.preferences.origin == '':
-            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+            query = BabyNames.objects.filter(gender=couple.preferences.gender.lower())
         else:
-            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+            query = BabyNames.objects.filter(gender=couple.preferences.gender.lower(), usage=couple.preferences.origin)
         serializer = BabyNamesSerializer(query, many=True)
 
     elif side2:
@@ -42,9 +55,9 @@ def get_names_from_prefs(request):
         elif couple.preferences.gender == '':
             query = BabyNames.objects.filter(usage=couple.preferences.origin)
         elif couple.preferences.origin == '':
-            query = BabyNames.objects.filter(gender=couple.preferences.gender)
+            query = BabyNames.objects.filter(gender=couple.preferences.gender.lower())
         else:
-            query = BabyNames.objects.filter(gender=couple.preferences.gender, usage=couple.preferences.origin)
+            query = BabyNames.objects.filter(gender=couple.preferences.gender.lower(), usage=couple.preferences.origin)
         serializer = BabyNamesSerializer(query, many=True)
 
     else:
@@ -53,7 +66,7 @@ def get_names_from_prefs(request):
 
     # breakpoint()
     names_list = list(query)
-    # breakpoint()
+    #breakpoint()
     if UserNamePools.objects.get(usercouple_id=couple).names.all() == '':
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
@@ -119,7 +132,7 @@ class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 @csrf_exempt
 @api_view(['POST'])
 def set_couple(request):
-    user2 = User.objects.get(username=request.data['partnerUserame'])        
+    user2 = User.objects.get(username=request.data['partnerUsername'])        
     couple = UserCouples.objects.update_or_create(user_one=request.user, defaults={'user_two':user2})[0]
     couple.save()
     serializer = UserCouplesSerializer(couple)
@@ -140,8 +153,39 @@ def set_preferences(request):
 
     couplePreferences = UserPreferences.objects.update_or_create(usercouple_id=usercouple_id, defaults={'gender': gender, 'origin':origin})[0]
     print(couplePreferences)
-    # breakpoint()
     couplePreferences.save()
     serializer=UserPreferencesSerializer(couplePreferences)
     
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def get_queryset(self):
+        queryset = LikedNames.objects.all()
+        matched = self.request.query_params.get('matched')
+        if matched is not None:
+            queryset = queryset.filter(matched=matched)
+        return queryset
+
+
+@csrf_exempt
+@api_view(['POST'])
+def add_my_name(request):
+    if request.user.couple_user_one.first():
+         usercouple_id = request.user.couple_user_one.first()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+    else:
+        usercouple_id =''
+    name = request.data['customName']
+    if(BabyNames.objects.filter(baby_name=name).exists()):
+        likename = LikedNames(usercouple_id=usercouple_id, name_id=BabyNames.objects.get(baby_name=name), matched=False)
+        likename.save()
+
+    else:
+        newName = BabyNames.objects.create(baby_name=name.set(), gender=request.data['gender'], usage='user_added')
+        newName.save()
+        likename = LikedNames(usercouple_id=usercouple_id, name_id=newName.id, matched=False)
+        likename.save()
+    nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
+    newpool=nameInPool.names.add(BabyNames.objects.get(baby_name=name).id)
+    serializer=UserNamePoolsSerializer(nameInPool)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+

@@ -163,6 +163,7 @@ def set_preferences(request):
     elif request.user.couple_user_two.first():
         usercouple_id = request.user.couple_user_two.first()
     else:
+        #Create new couple if non-existing?
         usercouple_id =''
     gender = request.data['gender']
     origin = request.data['origin']
@@ -183,19 +184,23 @@ def set_preferences(request):
 
 @csrf_exempt
 @api_view(['POST'])
-def deletelikedname(request):
-    # if request.user.couple_user_one.first():
-    #      usercouple_id = request.user.couple_user_one.first()
-    # elif request.user.couple_user_two.first():
-    #     usercouple_id = request.user.couple_user_two.first()
-    # else:
-    #     usercouple_id =''
+def deletelikedname(request): # Deletes liked name from user and couple objects
+    name = request.data['customName']
+    if request.user.couple_user_one.first():
+        usercouple_id = request.user.couple_user_one.first()
+        if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
+            couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
+            couple_likename.delete()
+    elif request.user.couple_user_two.first():
+        usercouple_id = request.user.couple_user_two.first()
+        if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
+            couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
+            couple_likename.delete()
+
     user_id = request.user.id
     # breakpoint()
-    name = request.data['customName']
-    #BabyNames.objects.filter(baby_name=name).first()
-    likename = UserLikedNames.objects.filter(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
-    likename.delete()
+    user_likename = UserLikedNames.objects.filter(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
+    user_likename.delete()
 
     nameInPool = UserNamePools.objects.get(usercouple_id=usercouple_id)
     serializer=UserNamePoolsSerializer(nameInPool)

@@ -37,7 +37,7 @@ urlpatterns=[
      path('set_preferences/', views.set_preferences, name='set_preferences'),
      path('pref_names/', get_names_from_prefs),
      path('set_user/', get_user_info),
-     path('deletelikedname', deletelikedname)
+     path('deletelikedname/', deletelikedname)
 ]
 
 urlpatterns += router.urls

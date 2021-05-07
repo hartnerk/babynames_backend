@@ -2,7 +2,7 @@ from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet
 from django.urls import path
 from . import views
-from .views import NewUser, get_names_from_prefs
+from .views import NewUser, get_names_from_prefs, get_user_info
 from rest_framework_extensions.routers import NestedRouterMixin
 
 
@@ -30,7 +30,8 @@ urlpatterns=[
      path('users/', views.NewUser.as_view()),
      path('set_couples/', views.set_couple, name='set_couple'),
      path('set_preferences/', views.set_preferences, name='set_preferences'),
-     path('pref_names/', get_names_from_prefs)
+     path('pref_names/', get_names_from_prefs),
+     path('set_user/', get_user_info)
 ]
 
 urlpatterns += router.urls

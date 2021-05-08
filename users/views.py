@@ -148,11 +148,28 @@ class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 @csrf_exempt
 @api_view(['POST'])
 def set_couple(request):
-    user2 = User.objects.get(username=request.data['partnerUsername'])        
-    couple = UserCouples.objects.update_or_create(user_one=request.user, defaults={'user_two':user2})[0]
-    couple.save()
-    serializer = UserCouplesSerializer(couple)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    try:
+        user2 = User.objects.get(username=request.data['partnerUsername'])
+        couple = UserCouples.objects.update_or_create(user_one=request.user, defaults={'user_two':user2})[0]
+        couple.save()
+        serializer = UserCouplesSerializer(couple)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    except:
+        return Response("Please Enter a Valid Username", status=status.HTTP_404_NOT_FOUND)
+          
+    
+
+@csrf_exempt
+@api_view(['GET'])
+def get_partner(request): 
+    if request.user.couple_user_one.first():
+        partner_id = request.user.couple_user_one.first().user_two.id
+    elif request.user.couple_user_two.first():
+        partner_id = request.user.couple_user_two.first().user_one.id
+    else:
+        partner_id = False
+    serializer= UserSerializer(User.objects.get(id=partner_id))
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @csrf_exempt
 @api_view(['POST'])

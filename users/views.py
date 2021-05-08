@@ -164,12 +164,15 @@ def set_couple(request):
 def get_partner(request): 
     if request.user.couple_user_one.first():
         partner_id = request.user.couple_user_one.first().user_two.id
+        serializer= UserSerializer(User.objects.get(id=partner_id))
+        return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.user.couple_user_two.first():
         partner_id = request.user.couple_user_two.first().user_one.id
+        serializer= UserSerializer(User.objects.get(id=partner_id))
+        return Response(serializer.data, status=status.HTTP_200_OK)
     else:
-        partner_id = False
-    serializer= UserSerializer(User.objects.get(id=partner_id))
-    return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(False, status=status.HTTP_404_NOT_FOUND)
+    
 
 @csrf_exempt
 @api_view(['POST'])

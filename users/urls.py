@@ -40,7 +40,6 @@ urlpatterns=[
      path('set_preferences/', views.set_preferences, name='set_preferences'),
 
      path('pref_names/', get_names_from_prefs),
-     path('pref_names/', get_names_from_prefs),
 
      path('add_name/', views.add_my_name, name='add_my_name'),
      path('deletelikedname/', deletelikedname),

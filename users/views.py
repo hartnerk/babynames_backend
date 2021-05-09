@@ -3,15 +3,19 @@ from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User, UserLikedNames
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User, UserLikedNames, UserDislikedNames
 from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.views import APIView
 import json
 from django.http import JsonResponse
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer, UserDislikedNamesSerializer
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from django.db.models import Max
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy import sparse
+
 
 import sqlite3 
 import random
@@ -35,6 +39,40 @@ def get_user_info(request):
     #breakpoint()
     return Response(userdata, status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+def recomendations(request):
+    datafull=[[]] # add zero if you want userid in beinging of each row
+    users=UserSerializer(User.objects.all(), many=True)
+    likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
+    disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
+    for userindex, user in enumerate(users.data):
+        data=[0] * len(datafull[0])
+        # data[0] = user['id']   add if you want user id at front of each row
+        datafull.append(data)
+        if UserLikedNames.objects.filter(id=user['id']).exists():
+            likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
+        if UserDislikedNames.objects.filter(id=user['id']).exists():
+            dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
+        for like in likes.data:
+            if like['name_id'] in datafull[0]:
+                index = datafull[0].index(like['name_id'])
+                datafull[userindex][index] = 1
+            else:
+                datafull[0].append(like['name_id'])
+                length=len(datafull[0])
+                for index, row in enumerate(datafull):
+                    if index==(userindex+1) :
+                        row.append(1)
+                    elif index !=0:
+                        row.append(0)
+
+
+    df = pd.DataFrame(datafull[1:-1], columns=datafull[0])
+
+    # next step is to clean users that do not have any likes then continue with below tutorial 
+    # https://medium.com/radon-dev/item-item-collaborative-filtering-with-binary-or-unary-data-e8f0b465b2c3
+    return Response(serializer.data, status=status.SERVICE_UNDER_CONSTRUCTION)
 
 @api_view(['GET'])
 def get_names_from_prefs(request):
@@ -135,6 +173,10 @@ class UserLikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserLikedNames.objects.all()
     serializer_class = UserLikedNamesSerializer
 
+class UserDislikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = UserDislikedNames.objects.all()
+    serializer_class = UserDislikedNamesSerializer
+
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
     queryset = LikedNames.objects.all()
@@ -144,6 +186,7 @@ class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if matched is not None:
             queryset = queryset.filter(matched=matched)
         return queryset
+
 
 @csrf_exempt
 @api_view(['POST'])

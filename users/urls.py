@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet, UserLikedNamesViewSet
+from .views import UserViewSet, UserPreferencesViewSet, UserCouplesViewSet, UserNamePoolsViewSet, BabyNamesViewSet, LikedNamesViewSet, UserLikedNamesViewSet, UserDislikedNamesViewSet
 from django.urls import path
 from . import views
 from .views import NewUser, get_names_from_prefs, get_user_info, deletelikedname, get_partner
@@ -12,19 +12,11 @@ class NestedDefaultRouter(NestedRouterMixin, DefaultRouter):
 router = NestedDefaultRouter()
 user_router = router.register(r'user_info', UserViewSet, basename='user_info')
 user_router.register(r'user-likes', UserLikedNamesViewSet, basename='user-likes', parents_query_lookups=['user_id'])
+user_router.register(r'user-dislikes', UserDislikedNamesViewSet, basename='user-dislikes', parents_query_lookups=['user_id'])
 couples_router = router.register(r'couples', UserCouplesViewSet, basename='couples')
-
-couples_router.register(r'liked-names', LikedNamesViewSet,
-                basename='liked-names', parents_query_lookups=['usercouple_id']),
-couples_router.register(r'preferences', UserPreferencesViewSet,
-                basename='preferences', parents_query_lookups=['usercouple_id']),
+couples_router.register(r'liked-names', LikedNamesViewSet, basename='liked-names', parents_query_lookups=['usercouple_id']),
 couples_router.register(r'name-pools', UserNamePoolsViewSet, basename='name-pools', parents_query_lookups=['usercouple_id']),
-
 router.register(r'user-list', UserViewSet, basename='user-list'),
-# router.register(r'preferences', UserPreferencesViewSet,
-#                 basename='preferences'),
-# router.register(r'couples', UserCouplesViewSet, basename='couples'),
-# router.register(r'name-pools', UserNamePoolsViewSet, basename='name-pools'),
 router.register(r'baby-names', BabyNamesViewSet, basename='baby-names'),
 
 urlpatterns=[
@@ -45,6 +37,8 @@ urlpatterns=[
      path('deletelikedname/', deletelikedname),
 
      path('match_order/', views.match_order, name='match_order'),
+
+     path('recomendations/', views.recomendations, name='recomendations'),
      
 ]
 

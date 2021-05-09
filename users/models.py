@@ -88,7 +88,8 @@ class LikedNames(models.Model):
 
 class UserLikedNames(models.Model):
 
-    user_id = models.ForeignKey(User, 
+    user_id = models.ForeignKey(
+        User, 
         on_delete=models.CASCADE, 
         related_name='user_liked_names')
 
@@ -102,3 +103,18 @@ class UserLikedNames(models.Model):
 
     def __str__(self):
         return f'User: {self.user_id} - Liked Name: {self.name_id}'
+
+class UserDislikedNames(models.Model):
+    user_id = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='user_disliked_names')
+
+    name_id = models.ForeignKey(
+        BabyNames,
+        on_delete=models.CASCADE,
+        related_name='user_disliked_names'
+    )
+
+    def __str__(self):
+        return f'User: {self.user_id} - Disliked Name: {self.name_id}'

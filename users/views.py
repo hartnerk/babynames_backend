@@ -49,7 +49,7 @@ def recomendations(request):
         data=[0] * len(datafull[0])
         data[0] = user['id']   #add if you want user id at front of each row
         datafull.append(data)
-        # print('your printing all likes: ', UserLikedNames.objects.filter(user_id=user['id']))
+        # print('your printing all likes: ', UserDislikedNames.objects.filter(user_id=user['id']))
         likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
         dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
         for like in likes.data:
@@ -64,11 +64,23 @@ def recomendations(request):
                         row.append(1)
                     elif index !=0:
                         row.append(0)
+        for dislike in dislikes.data:
+            if dislike['name_id'] in datafull[0]:
+                index = datafull[0].index(dislike['name_id'])
+                datafull[userindex][index] = -1
+            else:
+                datafull[0].append(dislike['name_id'])
+                length=len(datafull[0])
+                for index, row in enumerate(datafull):
+                    if index==(userindex+1) :
+                        row.append(-1)
+                    elif index !=0:
+                        row.append(0)
 
     # Pull out users if they have no likes
     dataclean=[]
     for index, row in enumerate(datafull):
-        if 1 in row[1:] or index==0:
+        if 1 in row[1:] or -1 in row[1:] or index==0:
             dataclean.append(row)
     temp=[]
     user_index='Please Like More Names To get Better Recomendations'
@@ -77,7 +89,7 @@ def recomendations(request):
             user_index =index-1
         temp.append(row[1:])
     dataclean=temp
-    data_items = pd.DataFrame(dataclean[1:], columns=dataclean[0])
+    data_items = pd.DataFrame(dataclean, columns=dataclean[0])
     magnitude = np.sqrt(np.square(data_items).sum(axis=1))
 
     # unitvector = (x / magnitude, y / magnitude, z / magnitude, ...)
@@ -95,7 +107,7 @@ def recomendations(request):
     data_matrix = calculate_similarity(data_items)
 
     # Lets get the top 10 similar names
-
+    # breakpoint()
     print(data_matrix.loc[13423].nlargest(10))
 
     #------------------------
@@ -147,7 +159,8 @@ def recomendations(request):
     serializer = BabyNamesSerializer(query, many=True)
     # next step is to clean users that do not have any likes then continue with below tutorial 
     # https://medium.com/radon-dev/item-item-collaborative-filtering-with-binary-or-unary-data-e8f0b465b2c3
-    # breakpoint()
+    if len(serializer.data)==0:
+        return Response([{"baby_name" : "There are no users like you, the more you swipe the better our recomendations get"}], status=status.HTTP_200_OK)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

@@ -42,16 +42,16 @@ def get_user_info(request):
 def recomendations(request):
     datafull=[[0]] 
     users=UserSerializer(User.objects.all(), many=True)
-    likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
-    disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
+    # likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
+    # disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
     for userindex, user in enumerate(users.data):
+        # print('your printing each username: ', user['username'])
         data=[0] * len(datafull[0])
         data[0] = user['id']   #add if you want user id at front of each row
         datafull.append(data)
-        if UserLikedNames.objects.filter(id=user['id']).exists():
-            likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
-        if UserDislikedNames.objects.filter(id=user['id']).exists():
-            dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
+        # print('your printing all likes: ', UserDislikedNames.objects.filter(user_id=user['id']))
+        likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
+        dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
         for like in likes.data:
             if like['name_id'] in datafull[0]:
                 index = datafull[0].index(like['name_id'])
@@ -64,20 +64,32 @@ def recomendations(request):
                         row.append(1)
                     elif index !=0:
                         row.append(0)
+        for dislike in dislikes.data:
+            if dislike['name_id'] in datafull[0]:
+                index = datafull[0].index(dislike['name_id'])
+                datafull[userindex][index] = -1
+            else:
+                datafull[0].append(dislike['name_id'])
+                length=len(datafull[0])
+                for index, row in enumerate(datafull):
+                    if index==(userindex+1) :
+                        row.append(-1)
+                    elif index !=0:
+                        row.append(0)
 
     # Pull out users if they have no likes
     dataclean=[]
     for index, row in enumerate(datafull):
-        if 1 in row[1:] or index==0:
+        if 1 in row[1:] or -1 in row[1:] or index==0:
             dataclean.append(row)
     temp=[]
     user_index='Please Like More Names To get Better Recomendations'
     for index, row in enumerate(dataclean):
-        if user['id'] in row:
-            user_index =index
+        if request.user.id in row:
+            user_index =index-1
         temp.append(row[1:])
     dataclean=temp
-    data_items = pd.DataFrame(dataclean[1:], columns=dataclean[0])
+    data_items = pd.DataFrame(dataclean, columns=dataclean[0])
     magnitude = np.sqrt(np.square(data_items).sum(axis=1))
 
     # unitvector = (x / magnitude, y / magnitude, z / magnitude, ...)
@@ -95,7 +107,7 @@ def recomendations(request):
     data_matrix = calculate_similarity(data_items)
 
     # Lets get the top 10 similar names
-
+    # breakpoint()
     print(data_matrix.loc[13423].nlargest(10))
 
     #------------------------
@@ -111,12 +123,15 @@ def recomendations(request):
 
     # Get the artists the user has played.
     # HARD CODED CHANGE FOR FINAL CODE user_index ALREADY SET AND WILL RETURN MORE SWIPES REQUIRED
+    # breakpoint()
     try:
-        user_index=2
+        # breakpoint()
+        # user_index=user['id']
+        # user_index=2
         known_user_likes = data_items.iloc[user_index]
         known_user_likes = known_user_likes[known_user_likes >0].index.values
     except:
-        return Response('You need to start swiping before we can recomend choices', status=status.HTTP_200_OK)
+        return Response([{"baby_name" : "You need to start swiping before we can recomend choices"}], status=status.HTTP_200_OK)
   
     # Construct the neighbourhood from the most similar items to the
     # ones our user has already liked.
@@ -133,7 +148,9 @@ def recomendations(request):
     score = neighbourhood.dot(user_vector).div(neighbourhood.sum(axis=1))
 
     # Drop the known likes.
-    score = score.drop(known_user_likes)
+    # breakpoint()
+    score= score.drop(known_user_likes,  errors='ignore', axis=0)
+    # score = score.drop(known_user_likes)
 
     print(known_user_likes)
     print(score.nlargest(20))
@@ -142,6 +159,8 @@ def recomendations(request):
     serializer = BabyNamesSerializer(query, many=True)
     # next step is to clean users that do not have any likes then continue with below tutorial 
     # https://medium.com/radon-dev/item-item-collaborative-filtering-with-binary-or-unary-data-e8f0b465b2c3
+    if len(serializer.data)==0:
+        return Response([{"baby_name" : "There are no users like you, the more you swipe the better our recomendations get"}], status=status.HTTP_200_OK)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
@@ -336,6 +355,8 @@ def deletelikedname(request): # Deletes liked name from user and couple objects
 @csrf_exempt
 @api_view(['POST'])
 def add_my_name(request):
+    # Athenticate request useing below
+    permissions_classes=[permissions.IsAuthenticated]
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():

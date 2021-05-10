@@ -1,17 +1,11 @@
 from django.db.models import fields
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, UserLikedNames
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, UserLikedNames, UserDislikedNames
 
 
 class NewUserSerializer(serializers.ModelSerializer):
-    # token = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True)
-
-    # def get_token(self, obj):
-    #     token= {test_token : 'thisisAteesTT'}
-    #     return token
-
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         instance = self.Meta.model(**validated_data)
@@ -64,6 +58,10 @@ class UserLikedNamesSerializer(serializers.ModelSerializer):
         model = UserLikedNames
         fields = ['id', 'user_id', 'name_id', 'order']
 
+class UserDislikedNamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDislikedNames
+        fields = ['id', 'user_id', 'name_id']
 
 class UserCouplesSerializer(serializers.ModelSerializer):
 

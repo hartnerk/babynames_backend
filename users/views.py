@@ -3,22 +3,25 @@ from rest_framework.decorators import api_view
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User, UserLikedNames
+from .models import UserPreferences, UserCouples, UserNamePools, BabyNames, LikedNames, User, UserLikedNames, UserDislikedNames
 from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.views import APIView
 import json
 from django.http import JsonResponse
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer
-from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer;
+from . serializers import NewUserSerializer, UserSerializer, UserPreferencesSerializer, UserCouplesSerializer, UserNamePoolsSerializer, BabyNamesSerializer, LikedNamesSerializer, UserLikedNamesSerializer, UserDislikedNamesSerializer
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from django.db.models import Max
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy import sparse
+
 
 import sqlite3 
 import random
 
 @api_view(['GET'])
 def get_user_info(request):
-    # breakpoint()
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():
@@ -32,17 +35,120 @@ def get_user_info(request):
     if not usercouple_id == '':          
         serializer=UserCouplesSerializer(usercouple_id)
         userdata.update(serializer.data)
-    #breakpoint()
     return Response(userdata, status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+def recomendations(request):
+    datafull=[[0]] 
+    users=UserSerializer(User.objects.all(), many=True)
+    likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
+    disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
+    for userindex, user in enumerate(users.data):
+        data=[0] * len(datafull[0])
+        data[0] = user['id']   #add if you want user id at front of each row
+        datafull.append(data)
+        if UserLikedNames.objects.filter(id=user['id']).exists():
+            likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
+        if UserDislikedNames.objects.filter(id=user['id']).exists():
+            dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
+        for like in likes.data:
+            if like['name_id'] in datafull[0]:
+                index = datafull[0].index(like['name_id'])
+                datafull[userindex][index] = 1
+            else:
+                datafull[0].append(like['name_id'])
+                length=len(datafull[0])
+                for index, row in enumerate(datafull):
+                    if index==(userindex+1) :
+                        row.append(1)
+                    elif index !=0:
+                        row.append(0)
+
+    # Pull out users if they have no likes
+    dataclean=[]
+    for index, row in enumerate(datafull):
+        if 1 in row[1:] or index==0:
+            dataclean.append(row)
+    temp=[]
+    user_index='Please Like More Names To get Better Recomendations'
+    for index, row in enumerate(dataclean):
+        if user['id'] in row:
+            user_index =index
+        temp.append(row[1:])
+    dataclean=temp
+    data_items = pd.DataFrame(dataclean[1:], columns=dataclean[0])
+    magnitude = np.sqrt(np.square(data_items).sum(axis=1))
+
+    # unitvector = (x / magnitude, y / magnitude, z / magnitude, ...)
+    data_items = data_items.divide(magnitude, axis='index')
+    def calculate_similarity(data_items):
+        """Calculate the column-wise cosine similarity for a sparse
+        matrix. Return a new dataframe matrix with similarities.
+        """
+        data_sparse = sparse.csr_matrix(data_items)
+        similarities = cosine_similarity(data_sparse.transpose())
+        sim = pd.DataFrame(data=similarities, index= data_items.columns, columns= data_items.columns)
+        return sim
+
+    # Build the similarity matrix
+    data_matrix = calculate_similarity(data_items)
+
+    # Lets get the top 10 similar names
+
+    print(data_matrix.loc[13423].nlargest(10))
+
+    #------------------------
+    # USER-ITEM CALCULATIONS
+    #------------------------
+
+    # Construct a new dataframe with the 10 closest neighbours (most similar)
+    # for each artist.
+    data_neighbours = pd.DataFrame(index=data_matrix.columns, columns=range(1,11))
+    
+    for i in range(0, len(data_matrix.columns)):
+        data_neighbours.iloc[i,:10] = data_matrix.iloc[0:,i].sort_values(ascending=False)[:10].index
+
+    # Get the artists the user has played.
+    # HARD CODED CHANGE FOR FINAL CODE user_index ALREADY SET AND WILL RETURN MORE SWIPES REQUIRED
+    try:
+        user_index=2
+        known_user_likes = data_items.iloc[user_index]
+        known_user_likes = known_user_likes[known_user_likes >0].index.values
+    except:
+        return Response('You need to start swiping before we can recomend choices', status=status.HTTP_200_OK)
+  
+    # Construct the neighbourhood from the most similar items to the
+    # ones our user has already liked.
+    most_similar_to_likes = data_neighbours.loc[known_user_likes]
+    similar_list = most_similar_to_likes.values.tolist()
+    similar_list = list(set([item for sublist in similar_list for item in sublist]))
+    neighbourhood = data_matrix[similar_list].loc[similar_list]
+
+    # A user vector containing only the neighbourhood items and
+    # the known user likes.
+    user_vector = data_items.iloc[user_index].loc[similar_list]
+
+    # Calculate the score.
+    score = neighbourhood.dot(user_vector).div(neighbourhood.sum(axis=1))
+
+    # Drop the known likes.
+    score = score.drop(known_user_likes)
+
+    print(known_user_likes)
+    print(score.nlargest(20))
+    recomendedwords=score.nlargest(20).index.values.tolist()
+    query = BabyNames.objects.filter(id__in=recomendedwords)
+    serializer = BabyNamesSerializer(query, many=True)
+    # next step is to clean users that do not have any likes then continue with below tutorial 
+    # https://medium.com/radon-dev/item-item-collaborative-filtering-with-binary-or-unary-data-e8f0b465b2c3
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_names_from_prefs(request):
 
     side1 = request.user.couple_user_one.first()
     side2 = request.user.couple_user_two.first()
-
-    # breakpoint()
 
     if side1:
         couple = side1
@@ -72,21 +178,18 @@ def get_names_from_prefs(request):
         query = BabyNames.objects.none()
         serializer = BabyNamesSerializer(query, many=True)
 
-    # breakpoint()
     names_list_full = list(query)
     if len(names_list_full) > 100:
         names_list = random.sample(names_list_full, 100)
     else:
         names_list = names_list_full
-    # random.shuffle(names_list)
-    #breakpoint()
+
     if not UserNamePools.objects.filter(usercouple_id=couple).exists():
         instance = UserNamePools.objects.create(usercouple_id=couple)
         instance.names.set(names_list)
     else:
         instance = UserNamePools.objects.get(usercouple_id=couple)
         instance.names.set(names_list)
-    # breakpoint()
     
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -135,6 +238,10 @@ class UserLikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = UserLikedNames.objects.all()
     serializer_class = UserLikedNamesSerializer
 
+class UserDislikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = UserDislikedNames.objects.all()
+    serializer_class = UserDislikedNamesSerializer
+
 class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = LikedNamesSerializer
     queryset = LikedNames.objects.all()
@@ -144,6 +251,7 @@ class LikedNamesViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if matched is not None:
             queryset = queryset.filter(matched=matched)
         return queryset
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -177,7 +285,6 @@ def get_partner(request):
 @csrf_exempt
 @api_view(['POST'])
 def set_preferences(request):
-    #breakpoint()
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():
@@ -218,7 +325,6 @@ def deletelikedname(request): # Deletes liked name from user and couple objects
             couple_likename.delete()
 
     user_id = request.user.id
-    # breakpoint()
     user_likename = UserLikedNames.objects.filter(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
     user_likename.delete()
 
@@ -238,9 +344,7 @@ def add_my_name(request):
     #     usercouple_id =''
     user_id = request.user
     name = request.data['customName']
-    # breakpoint()
     if(BabyNames.objects.filter(baby_name=name).exists()):
-        # breakpoint()
         likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
 
         # likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=UserLikedNames.objects.filter(user_id=1).aggregate(Max('order'))['order__max'])
@@ -250,7 +354,6 @@ def add_my_name(request):
     else:
         newName = BabyNames.objects.create(baby_name=name, gender=request.data['gender'], usage='user_added')
         newName.save()
-        # breakpoint()
         likename = UserLikedNames.objects.create(user_id=user_id, name_id=newName, order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
         likename.save()
 

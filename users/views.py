@@ -116,7 +116,7 @@ def recomendations(request):
         known_user_likes = data_items.iloc[user_index]
         known_user_likes = known_user_likes[known_user_likes >0].index.values
     except:
-        return Response('You need to start swiping before we can recomend choices')
+        return Response('You need to start swiping before we can recomend choices', status=status.HTTP_200_OK)
   
     # Construct the neighbourhood from the most similar items to the
     # ones our user has already liked.

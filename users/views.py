@@ -358,28 +358,38 @@ def add_my_name(request):
     # Athenticate request useing below
     permissions_classes=[permissions.IsAuthenticated]
     if request.user.couple_user_one.first():
-         usercouple_id = request.user.couple_user_one.first()
+        usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():
         usercouple_id = request.user.couple_user_two.first()
-    # else:
-    #     usercouple_id =''
+    
     user_id = request.user
     name = request.data['customName']
-    if(BabyNames.objects.filter(baby_name=name).exists()):
+
+    # If added name exists in db
+    if BabyNames.objects.filter(baby_name=name).exists():
         likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
-
-        # likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=UserLikedNames.objects.filter(user_id=1).aggregate(Max('order'))['order__max'])
-
         likename.save()
-
+        
+        # If user is in couple, add name to couples liked names list
+        if usercouple_id:
+            new_couple_like, created = LikedNames.objects.get_or_create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first())
+            if created == False and new_couple_like['matched'] == False:
+                new_couple_like['matched'] = True
+            new_couple_like.save()
+        
+    # If added name doesn't exist in db, create it
     else:
         newName = BabyNames.objects.create(baby_name=name, gender=request.data['gender'], usage='user_added')
         newName.save()
         likename = UserLikedNames.objects.create(user_id=user_id, name_id=newName, order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
         likename.save()
+        # If user is in couple, add name to couples liked names list
+        if usercouple_id:
+            cpl_likename = LikedNames.objects.create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=LikedNames.objects.filter(usercouple_id=usercouple_id).aggregate(Max('order'))['order__max'])
+            cpl_likename.save()
 
     nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
-    newpool=nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
+    nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
     serializer=UserNamePoolsSerializer(nameInPool)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 

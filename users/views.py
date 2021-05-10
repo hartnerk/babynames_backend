@@ -42,16 +42,16 @@ def get_user_info(request):
 def recomendations(request):
     datafull=[[0]] 
     users=UserSerializer(User.objects.all(), many=True)
-    likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
-    disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
+    # likes=UserLikedNamesSerializer(UserLikedNames.objects.all(), many=True)
+    # disliked=UserDislikedNamesSerializer(UserDislikedNames.objects.all(), many=True)
     for userindex, user in enumerate(users.data):
+        # print('your printing each username: ', user['username'])
         data=[0] * len(datafull[0])
         data[0] = user['id']   #add if you want user id at front of each row
         datafull.append(data)
-        if UserLikedNames.objects.filter(id=user['id']).exists():
-            likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
-        if UserDislikedNames.objects.filter(id=user['id']).exists():
-            dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
+        # print('your printing all likes: ', UserLikedNames.objects.filter(user_id=user['id']))
+        likes=UserLikedNamesSerializer(UserLikedNames.objects.filter(user_id=user['id']), many=True)
+        dislikes=UserDislikedNamesSerializer(UserDislikedNames.objects.filter(user_id=user['id']), many=True)
         for like in likes.data:
             if like['name_id'] in datafull[0]:
                 index = datafull[0].index(like['name_id'])
@@ -74,7 +74,7 @@ def recomendations(request):
     user_index='Please Like More Names To get Better Recomendations'
     for index, row in enumerate(dataclean):
         if user['id'] in row:
-            user_index =index
+            user_index =index-1
         temp.append(row[1:])
     dataclean=temp
     data_items = pd.DataFrame(dataclean[1:], columns=dataclean[0])
@@ -111,12 +111,15 @@ def recomendations(request):
 
     # Get the artists the user has played.
     # HARD CODED CHANGE FOR FINAL CODE user_index ALREADY SET AND WILL RETURN MORE SWIPES REQUIRED
+    # breakpoint()
     try:
-        user_index=2
+        # breakpoint()
+        # user_index=user['id']
+        # user_index=2
         known_user_likes = data_items.iloc[user_index]
         known_user_likes = known_user_likes[known_user_likes >0].index.values
     except:
-        return Response('You need to start swiping before we can recomend choices', status=status.HTTP_200_OK)
+        return Response([{"baby_name" : "You need to start swiping before we can recomend choices"}], status=status.HTTP_200_OK)
   
     # Construct the neighbourhood from the most similar items to the
     # ones our user has already liked.

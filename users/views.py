@@ -355,6 +355,8 @@ def deletelikedname(request): # Deletes liked name from user and couple objects
 @csrf_exempt
 @api_view(['POST'])
 def add_my_name(request):
+    # Athenticate request useing below
+    permissions_classes=[permissions.IsAuthenticated]
     if request.user.couple_user_one.first():
          usercouple_id = request.user.couple_user_one.first()
     elif request.user.couple_user_two.first():

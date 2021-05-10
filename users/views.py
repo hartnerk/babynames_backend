@@ -73,7 +73,7 @@ def recomendations(request):
     temp=[]
     user_index='Please Like More Names To get Better Recomendations'
     for index, row in enumerate(dataclean):
-        if user['id'] in row:
+        if request.user.id in row:
             user_index =index-1
         temp.append(row[1:])
     dataclean=temp
@@ -136,7 +136,9 @@ def recomendations(request):
     score = neighbourhood.dot(user_vector).div(neighbourhood.sum(axis=1))
 
     # Drop the known likes.
-    score = score.drop(known_user_likes)
+    # breakpoint()
+    score= score.drop(known_user_likes,  errors='ignore', axis=0)
+    # score = score.drop(known_user_likes)
 
     print(known_user_likes)
     print(score.nlargest(20))
@@ -145,6 +147,7 @@ def recomendations(request):
     serializer = BabyNamesSerializer(query, many=True)
     # next step is to clean users that do not have any likes then continue with below tutorial 
     # https://medium.com/radon-dev/item-item-collaborative-filtering-with-binary-or-unary-data-e8f0b465b2c3
+    # breakpoint()
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

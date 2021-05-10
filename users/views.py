@@ -371,7 +371,7 @@ def add_my_name(request):
         likename.save()
         
         # If user is in couple, add name to couples liked names list
-        if usercouple_id:
+        if request.user.couple_user_one.first() or request.user.couple_user_two.first():
             new_couple_like, created = LikedNames.objects.get_or_create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first())
             if created == False and new_couple_like['matched'] == False:
                 new_couple_like['matched'] = True
@@ -384,13 +384,17 @@ def add_my_name(request):
         likename = UserLikedNames.objects.create(user_id=user_id, name_id=newName, order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
         likename.save()
         # If user is in couple, add name to couples liked names list
-        if usercouple_id:
+        if request.user.couple_user_one.first() or request.user.couple_user_two.first():
             cpl_likename = LikedNames.objects.create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=LikedNames.objects.filter(usercouple_id=usercouple_id).aggregate(Max('order'))['order__max'])
             cpl_likename.save()
 
-    nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
-    nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
-    serializer=UserNamePoolsSerializer(nameInPool)
+            nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
+            nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
+            serializer=UserNamePoolsSerializer(nameInPool)
+            
+        else:
+            serializer=UserLikedNamesSerializer(likename)
+            
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @csrf_exempt

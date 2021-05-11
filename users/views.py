@@ -365,17 +365,25 @@ def add_my_name(request):
     user_id = request.user
     name = request.data['customName']
 
+    # breakpoint()
+    already_liked = UserLikedNames.objects.filter(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first())
+    if already_liked:
+        return Response(status=status.HTTP_201_CREATED)
+
     # If added name exists in db
     if BabyNames.objects.filter(baby_name=name).exists():
-        likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), order=UserLikedNames.objects.filter(user_id=user_id).aggregate(Max('order'))['order__max'])
+        likename = UserLikedNames.objects.create(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first(), order=BabyNames.objects.filter(baby_name=name).first().id)
         likename.save()
         
         # If user is in couple, add name to couples liked names list
         if request.user.couple_user_one.first() or request.user.couple_user_two.first():
-            new_couple_like, created = LikedNames.objects.get_or_create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first())
+            new_couple_like, created = LikedNames.objects.get_or_create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first(), order=BabyNames.objects.filter(baby_name=name).first().id)
             if created == False and new_couple_like['matched'] == False:
                 new_couple_like['matched'] = True
             new_couple_like.save()
+            nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
+            nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
+            nameInPool.save()
         
     # If added name doesn't exist in db, create it
     else:
@@ -387,15 +395,16 @@ def add_my_name(request):
         if request.user.couple_user_one.first() or request.user.couple_user_two.first():
             cpl_likename = LikedNames.objects.create(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first(), matched=False, order=LikedNames.objects.filter(usercouple_id=usercouple_id).aggregate(Max('order'))['order__max'])
             cpl_likename.save()
-
+            #order=LikedNames.objects.filter(usercouple_id=usercouple_id).aggregate(Max('order'))['order__max']
             nameInPool, created = UserNamePools.objects.get_or_create(usercouple_id=usercouple_id)
             nameInPool.names.add(BabyNames.objects.filter(baby_name=name).first().id)
-            serializer=UserNamePoolsSerializer(nameInPool)
+            nameInPool.save()
+        #     serializer=UserNamePoolsSerializer(nameInPool)
             
-        else:
-            serializer=UserLikedNamesSerializer(likename)
+        # else:
+        #     serializer=UserLikedNamesSerializer(likename)
             
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(status=status.HTTP_201_CREATED)
 
 @csrf_exempt
 @api_view(['POST'])

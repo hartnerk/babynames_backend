@@ -334,14 +334,26 @@ def deletelikedname(request): # Deletes liked name from user and couple objects
     name = request.data['customName']
     if request.user.couple_user_one.first():
         usercouple_id = request.user.couple_user_one.first()
+
         if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
+            # breakpoint()
             couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
             couple_likename.delete()
+
+            if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
+                couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
+                couple_likename.delete()
+
     elif request.user.couple_user_two.first():
         usercouple_id = request.user.couple_user_two.first()
+
         if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
             couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
             couple_likename.delete()
+
+            if LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first():
+                couple_likename = LikedNames.objects.filter(usercouple_id=usercouple_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
+                couple_likename.delete()
 
     user_id = request.user.id
     user_likename = UserLikedNames.objects.filter(user_id=user_id, name_id=BabyNames.objects.filter(baby_name=name).first()).first()
